@@ -2,7 +2,7 @@
 
 # it ain't pretty, it ain't nice but it was 10 minutes so hey.
 
-# echo "message" | threesms.py number
+# echo "message" | threesms.py number number2
 
 import cookielib
 import urllib
@@ -28,7 +28,7 @@ message_url = "https://webtexts.three.ie/webtext/messages/send"
 
 cookie_filename = "/tmp/.threesms"
 
-def main():
+def main(numbers):
 
     cj = cookielib.MozillaCookieJar(cookie_filename)
 
@@ -48,28 +48,30 @@ def main():
 
     print data
 
-    message_data = urllib.urlencode({
-        "data[Message][message]": sys.stdin.read(),
-        "data[Message][recipients_individual]": sys.argv[1]
-        })
+    for send_number in numbers:
 
-    response = opener.open(message_url, message_data)
-    data = ''.join(response.readlines())
+        message_data = urllib.urlencode({
+            "data[Message][message]": sys.stdin.read(),
+            "data[Message][recipients_individual]": send_number
+            })
 
-    if have_bs:
-        soup = BeautifulSoup.BeautifulSoup(data)
+        response = opener.open(message_url, message_data)
+        data = ''.join(response.readlines())
 
-        if soup.find("div", {"class": "success", "id": "flashMessage" }):
-            print "Message sent successfully"
-        else:
-            sys.stderr.write("Message sending failed!\n")
-            sys.exit(1)
+        if have_bs:
+            soup = BeautifulSoup.BeautifulSoup(data)
+
+            if soup.find("div", {"class": "success", "id": "flashMessage" }):
+                print "Message sent to %s successfully" % send_number
+            else:
+                sys.stderr.write("Message sending failed!\n")
+                sys.exit(1)
 
     return
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.stderr.write("threesms.py <number>\n")
+        sys.stderr.write("threesms.py [number...]\n")
         sys.exit(1)
 
-    main()
+    main(sys.argv[1:])
