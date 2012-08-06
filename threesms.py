@@ -10,6 +10,14 @@ import urllib2
 import os.path
 import sys
 
+have_bs = None
+
+try:
+    import BeautifulSoup
+    have_bs = True
+except ImportError:
+    pass
+
 #passfile in format number:password
 password_f = open(os.path.expanduser("~/.threepass"))
 uid, password = password_f.read().strip().split(":")
@@ -47,7 +55,17 @@ def main():
 
     response = opener.open(message_url, message_data)
     data = ''.join(response.readlines())
-    print data
+
+    if have_bs:
+        soup = BeautifulSoup.BeautifulSoup(data)
+
+        if soup.find("div", {"class": "success", "id": "flashMessage" }):
+            print "Message sent successfully"
+        else:
+            sys.stderr.write("Message sending failed!\n")
+            sys.exit(1)
+
+    return
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
