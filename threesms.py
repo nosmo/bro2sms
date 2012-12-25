@@ -5,10 +5,11 @@
 # echo "message" | threesms.py number number2
 
 import cookielib
-import urllib
-import urllib2
 import os
 import sys
+import tempfile
+import urllib
+import urllib2
 
 have_bs = None
 
@@ -24,11 +25,12 @@ MESSAGE_URL = "https://webtexts.three.ie/webtext/messages/send"
 class MessageSender(object):
     """Wrap logging into the Three site and sending messages"""
 
-    def __init__(self, username, password, cookie_filename="/tmp/.threesms"):
+    def __init__(self, username, password, cookie_filename=tempfile.mkstemp()[1]):
         self.username = username
         self.__password = password
 
         cj = cookielib.MozillaCookieJar(cookie_filename)
+        self.cookie_filename = cookie_filename
 
         self.opener = urllib2.build_opener(
             urllib2.HTTPRedirectHandler(),
@@ -87,7 +89,11 @@ def main(recipients):
     if sys.__stdin__.isatty():
         print header
 
-    message = sys.stdin.read()
+    try:
+        message = sys.stdin.read()
+    except KeyboardInterrupt as e:
+        print "[ okay, I'm outta here. ]"
+        sys.exit(1)
 
     if "username" not in login:
         print "No username"
@@ -116,6 +122,7 @@ def main(recipients):
                 sys.stderr.write("Message sending failed!\n")
                 sys.exit(1)
 
+    os.unlink(sender.cookie_filename)
     return
 
 if __name__ == "__main__":
