@@ -7,7 +7,7 @@
 import cookielib
 import urllib
 import urllib2
-import os.path
+import os
 import sys
 
 have_bs = None
@@ -18,10 +18,12 @@ try:
 except ImportError:
     pass
 
-login_url = "https://webtexts.three.ie//webtext/users/login"
-message_url = "https://webtexts.three.ie/webtext/messages/send"
+LOGIN_URL = "https://webtexts.three.ie//webtext/users/login"
+MESSAGE_URL = "https://webtexts.three.ie/webtext/messages/send"
 
 class MessageSender(object):
+    """Wrap logging into the Three site and sending messages"""
+
     def __init__(self, username, password, cookie_filename="/tmp/.threesms"):
         self.username = username
         self.__password = password
@@ -41,7 +43,7 @@ class MessageSender(object):
             })
 
     def sendMessage(self, recipient, message):
-        response = self.opener.open(login_url, self.__login_data)
+        response = self.opener.open(LOGIN_URL, self.__login_data)
         data = ''.join(response.readlines())
 
         message_data = urllib.urlencode({
@@ -49,7 +51,7 @@ class MessageSender(object):
             "data[Message][recipients_individual]": recipient
             })
 
-        response = self.opener.open(message_url, message_data)
+        response = self.opener.open(MESSAGE_URL, message_data)
         data = ''.join(response.readlines())
         return data
 
@@ -80,7 +82,10 @@ def main(recipients):
 
     to_msg = ", ".join([ "%s" % i for i in recipients if i not in numbers ])
     to_indict_msg = ", ".join([ "%s (%s)" % (i, numbers[i]) for i in recipients if i in numbers ])
-    header = "[ Message to %s ]" % (to_msg + ", " + to_indict_msg)
+    header = "[ Message to %s ]" % (",".join([ i for i in [to_msg, to_indict_msg] if i]))
+
+    if sys.__stdin__.isatty():
+        print header
 
     message = sys.stdin.read()
 
