@@ -13,7 +13,11 @@ Configuration is read from ~/.threesms/config. Configuration is simply of the fo
 `username 0811111111
 password 223344
 
+log ~/.smslog
+
 alias dude 00353822222222`
+
+The "log" parameter is a path to a file in which all sent messages are logged as prettified JSON.
 
 Requirements
 -----------

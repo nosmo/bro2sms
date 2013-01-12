@@ -5,11 +5,13 @@
 # echo "message" | threesms.py number number2
 
 import cookielib
+import datetime
 import os
 import sys
 import tempfile
 import urllib
 import urllib2
+import json
 
 have_bs = None
 
@@ -65,6 +67,7 @@ def parse_config(path=os.path.expanduser("~/.threesms/config")):
 
     login = {}
     numbers = {}
+    dolog = None
 
     for section, person, number in [ i for i in config_dat if len(i) == 3]:
         if section == "alias":
@@ -75,12 +78,14 @@ def parse_config(path=os.path.expanduser("~/.threesms/config")):
             login["username"] = value
         elif section == "password":
             login["password"] = value
+        elif section == "log":
+            dolog = value
 
-    return login, numbers
+    return login, numbers, dolog
 
 def main(recipients):
 
-    login, numbers = parse_config()
+    login, numbers, dolog = parse_config()
 
     to_msg = ", ".join([ "%s" % i for i in recipients if i not in numbers ])
     to_indict_msg = ", ".join([ "%s (%s)" % (i, numbers[i]) for i in recipients if i in numbers ])
@@ -103,15 +108,16 @@ def main(recipients):
         sys.exit(1)
 
     sender = MessageSender(login["username"], login["password"])
+    sent_labels = []
 
     for recipient in recipients:
-        if recipient in numbers:
 
+        if recipient in numbers:
             data = sender.sendMessage(numbers[recipient], message)
+            sent_labels.append(numbers[recipient])
         else:
             data = sender.sendMessage(recipient, message)
-
-        #print data
+            sent_labels.append(recipient)
 
         if have_bs:
             soup = BeautifulSoup.BeautifulSoup(data)
@@ -121,6 +127,32 @@ def main(recipients):
             else:
                 sys.stderr.write("Message sending failed!\n")
                 sys.exit(1)
+
+    if dolog:
+        now = datetime.datetime.now()
+        #log_f = open(os.path.join(["%s/%s" % (dolog, now.strftime("%Y%m%d%H%m%S")]), "w")
+        log_f = None
+        if os.path.exists(os.path.expanduser(dolog)):
+            try:
+                log_f = open(os.path.expanduser(dolog), "r+")
+            except IOError as e:
+                sys.stderr.write("Couldn't open logfile %s: %s\n" % (dolog, str(e)))
+                sys.exit(1)
+            current_data = json.loads(log_f.read())
+            log_f.seek(0)
+
+        else:
+            log_f = open(os.path.expanduser(dolog), "w+")
+            current_data = {}
+
+        log_data = {}
+        log_data["recipients"] = sent_labels
+        log_data["message"] = message
+        log_data["date"] = str(now)
+
+        current_data[now.strftime("%Y%m%d%H%m%S")] = log_data
+        log_f.write(json.dumps(current_data, sort_keys=True,
+                    indent=4, separators=(',', ': ')))
 
     os.unlink(sender.cookie_filename)
     return
