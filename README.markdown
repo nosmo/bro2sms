@@ -10,12 +10,13 @@ bro2sms shamelessly steals everything possible from o2sms, from output style to 
 
 Configuration is read from ~/.threesms/config. Configuration is simply of the format
 
-`username 0811111111
+<pre>username 0811111111
 password 223344
 
 log ~/.smslog
 
-alias dude 00353822222222`
+alias dude 00353822222222
+</pre>
 
 The "log" parameter is a path to a file in which all sent messages are logged as prettified JSON.
 
