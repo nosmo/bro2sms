@@ -101,10 +101,10 @@ def main(recipients):
         sys.exit(1)
 
     if "username" not in login:
-        print "No username"
+        print "No username provided!"
         sys.exit(1)
     elif "password" not in login:
-        print "No password"
+        print "No password provided!"
         sys.exit(1)
 
     sender = MessageSender(login["username"], login["password"])
@@ -123,14 +123,15 @@ def main(recipients):
             soup = BeautifulSoup.BeautifulSoup(data)
 
             if soup.find("div", {"class": "success", "id": "flashMessage" }):
-                print "Message sent to %s successfully" % recipient
+                print "[ Message sent to %s successfully ]" % recipient
             else:
                 sys.stderr.write("Message sending failed!\n")
                 sys.exit(1)
+        else:
+            print "[ Sending for %s complete ]" % recipient
 
     if dolog:
         now = datetime.datetime.now()
-        #log_f = open(os.path.join(["%s/%s" % (dolog, now.strftime("%Y%m%d%H%m%S")]), "w")
         log_f = None
         if os.path.exists(os.path.expanduser(dolog)):
             try:
